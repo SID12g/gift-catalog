@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 
-export default function Success() {
+function SuccessContent() {
   const searchParams = useSearchParams();
   const catalogId = searchParams.get("id");
   const [catalogLink, setCatalogLink] = useState("");
@@ -86,5 +86,29 @@ export default function Success() {
         </Link>
       </div>
     </div>
+  );
+}
+
+function LoadingFallback() {
+  return (
+    <div className="max-w-4xl mx-auto p-6 text-center">
+      <div className="animate-pulse">
+        <div className="h-8 bg-gray-200 rounded mb-4 w-1/3 mx-auto"></div>
+        <div className="h-4 bg-gray-200 rounded mb-6 w-1/4 mx-auto"></div>
+        <div className="h-12 bg-gray-200 rounded mb-6 w-full mx-auto"></div>
+        <div className="flex justify-center space-x-4">
+          <div className="h-10 bg-gray-200 rounded w-32"></div>
+          <div className="h-10 bg-gray-200 rounded w-32"></div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default function Success() {
+  return (
+    <Suspense fallback={<LoadingFallback />}>
+      <SuccessContent />
+    </Suspense>
   );
 }

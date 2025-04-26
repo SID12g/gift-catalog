@@ -1,14 +1,28 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams, useParams } from "next/navigation";
 import Link from "next/link";
-import { useForm } from "react-hook-form";
+import { useForm, SubmitHandler } from "react-hook-form";
 import { v4 as uuidv4 } from "uuid";
 import { supabase } from "@/lib/supabase";
 import { Catalog, Gift } from "@/types";
 
-export default function EditCatalog({ params }: { params: { id: string } }) {
+interface GiftFormData {
+  giftName: string;
+  giftPrice: string;
+  giftQuantity: string;
+  giftPurchaseLink: string;
+}
+
+interface CatalogFormData {
+  catalogTitle: string;
+  catalogDescription?: string;
+}
+
+export default function EditCatalog() {
+  const params = useParams();
+  const catalogId = params.id as string;
   const router = useRouter();
   const searchParams = useSearchParams();
   const password = searchParams.get("password");
@@ -20,12 +34,22 @@ export default function EditCatalog({ params }: { params: { id: string } }) {
   const [error, setError] = useState("");
 
   const {
-    register,
-    handleSubmit,
-    formState: { errors },
-    reset,
-    setValue,
-  } = useForm();
+    register: catalogRegister,
+    handleSubmit: catalogHandleSubmit,
+    formState: { errors: catalogErrors },
+    setValue: catalogSetValue,
+  } = useForm<CatalogFormData>();
+
+  const {
+    register: giftRegister,
+    handleSubmit: giftHandleSubmit,
+    formState: { errors: giftErrors },
+    reset: giftReset,
+  } = useForm<GiftFormData>({
+    defaultValues: {
+      giftQuantity: "1",
+    },
+  });
 
   useEffect(() => {
     const fetchCatalog = async () => {
@@ -33,7 +57,7 @@ export default function EditCatalog({ params }: { params: { id: string } }) {
         const { data, error } = await supabase
           .from("catalogs")
           .select("*")
-          .eq("id", params.id)
+          .eq("id", catalogId)
           .single();
 
         if (error) throw error;
@@ -46,7 +70,7 @@ export default function EditCatalog({ params }: { params: { id: string } }) {
         const catalogData = data as Catalog;
 
         if (!password || catalogData.password !== password) {
-          router.push(`/catalog/${params.id}`);
+          router.push(`/catalog/${catalogId}`);
           return;
         }
 
@@ -54,8 +78,8 @@ export default function EditCatalog({ params }: { params: { id: string } }) {
         setGifts(catalogData.gifts);
 
         // 폼 초기값 설정
-        setValue("catalogTitle", catalogData.title);
-        setValue("catalogDescription", catalogData.description || "");
+        catalogSetValue("catalogTitle", catalogData.title);
+        catalogSetValue("catalogDescription", catalogData.description || "");
       } catch (error) {
         console.error("Error fetching catalog:", error);
         setError("카탈로그를 불러오는 중 오류가 발생했습니다.");
@@ -65,9 +89,9 @@ export default function EditCatalog({ params }: { params: { id: string } }) {
     };
 
     fetchCatalog();
-  }, [params.id, password, router, setValue]);
+  }, [catalogId, password, router, catalogSetValue]);
 
-  const addGift = (data: any) => {
+  const addGift: SubmitHandler<GiftFormData> = (data) => {
     const newGift: Gift = {
       id: uuidv4(),
       name: data.giftName,
@@ -78,7 +102,7 @@ export default function EditCatalog({ params }: { params: { id: string } }) {
     };
 
     setGifts([...gifts, newGift]);
-    reset({
+    giftReset({
       giftName: "",
       giftPrice: "",
       giftQuantity: "1",
@@ -90,7 +114,7 @@ export default function EditCatalog({ params }: { params: { id: string } }) {
     setGifts(gifts.filter((gift) => gift.id !== id));
   };
 
-  const updateCatalog = async (data: any) => {
+  const updateCatalog: SubmitHandler<CatalogFormData> = async (data) => {
     if (!catalog) return;
 
     if (gifts.length === 0) {
@@ -170,7 +194,7 @@ export default function EditCatalog({ params }: { params: { id: string } }) {
       <div className="bg-white shadow-md rounded-lg p-6 mb-8">
         <h2 className="text-xl font-semibold mb-4">카탈로그 정보</h2>
 
-        <form onSubmit={handleSubmit(updateCatalog)}>
+        <form onSubmit={catalogHandleSubmit(updateCatalog)}>
           <div className="mb-4">
             <label className="block text-gray-700 mb-2" htmlFor="catalogTitle">
               카탈로그 제목 *
@@ -179,9 +203,9 @@ export default function EditCatalog({ params }: { params: { id: string } }) {
               id="catalogTitle"
               type="text"
               className="w-full p-2 border border-gray-300 rounded"
-              {...register("catalogTitle", { required: true })}
+              {...catalogRegister("catalogTitle", { required: true })}
             />
-            {errors.catalogTitle && (
+            {catalogErrors.catalogTitle && (
               <p className="text-red-500 mt-1">제목을 입력해주세요.</p>
             )}
           </div>
@@ -196,7 +220,7 @@ export default function EditCatalog({ params }: { params: { id: string } }) {
             <textarea
               id="catalogDescription"
               className="w-full p-2 border border-gray-300 rounded"
-              {...register("catalogDescription")}
+              {...catalogRegister("catalogDescription")}
             />
           </div>
         </form>
@@ -205,7 +229,7 @@ export default function EditCatalog({ params }: { params: { id: string } }) {
       <div className="bg-white shadow-md rounded-lg p-6 mb-8">
         <h2 className="text-xl font-semibold mb-4">선물 관리</h2>
 
-        <form onSubmit={handleSubmit(addGift)} className="mb-6">
+        <form onSubmit={giftHandleSubmit(addGift)} className="mb-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
             <div>
               <label className="block text-gray-700 mb-2" htmlFor="giftName">
@@ -215,13 +239,13 @@ export default function EditCatalog({ params }: { params: { id: string } }) {
                 id="giftName"
                 type="text"
                 className="w-full p-2 border border-gray-300 rounded"
-                {...register("giftName", {
+                {...giftRegister("giftName", {
                   required: "선물 이름을 입력해주세요",
                 })}
               />
-              {errors.giftName && (
+              {giftErrors.giftName && (
                 <p className="text-red-500 mt-1">
-                  {errors.giftName.message?.toString()}
+                  {giftErrors.giftName.message?.toString()}
                 </p>
               )}
             </div>
@@ -234,14 +258,14 @@ export default function EditCatalog({ params }: { params: { id: string } }) {
                 id="giftPrice"
                 type="number"
                 className="w-full p-2 border border-gray-300 rounded"
-                {...register("giftPrice", {
+                {...giftRegister("giftPrice", {
                   required: "가격을 입력해주세요",
                   min: { value: 0, message: "0 이상의 값을 입력해주세요" },
                 })}
               />
-              {errors.giftPrice && (
+              {giftErrors.giftPrice && (
                 <p className="text-red-500 mt-1">
-                  {errors.giftPrice.message?.toString()}
+                  {giftErrors.giftPrice.message?.toString()}
                 </p>
               )}
             </div>
@@ -256,16 +280,15 @@ export default function EditCatalog({ params }: { params: { id: string } }) {
               <input
                 id="giftQuantity"
                 type="number"
-                defaultValue="1"
                 className="w-full p-2 border border-gray-300 rounded"
-                {...register("giftQuantity", {
+                {...giftRegister("giftQuantity", {
                   required: "수량을 입력해주세요",
                   min: { value: 1, message: "1 이상의 값을 입력해주세요" },
                 })}
               />
-              {errors.giftQuantity && (
+              {giftErrors.giftQuantity && (
                 <p className="text-red-500 mt-1">
-                  {errors.giftQuantity.message?.toString()}
+                  {giftErrors.giftQuantity.message?.toString()}
                 </p>
               )}
             </div>
@@ -281,7 +304,7 @@ export default function EditCatalog({ params }: { params: { id: string } }) {
                 id="giftPurchaseLink"
                 type="text"
                 className="w-full p-2 border border-gray-300 rounded"
-                {...register("giftPurchaseLink", {
+                {...giftRegister("giftPurchaseLink", {
                   required: "구매 링크를 입력해주세요",
                   pattern: {
                     value:
@@ -290,9 +313,9 @@ export default function EditCatalog({ params }: { params: { id: string } }) {
                   },
                 })}
               />
-              {errors.giftPurchaseLink && (
+              {giftErrors.giftPurchaseLink && (
                 <p className="text-red-500 mt-1">
-                  {errors.giftPurchaseLink.message?.toString()}
+                  {giftErrors.giftPurchaseLink.message?.toString()}
                 </p>
               )}
             </div>
@@ -346,7 +369,7 @@ export default function EditCatalog({ params }: { params: { id: string } }) {
 
       <div className="text-center">
         <button
-          onClick={handleSubmit(updateCatalog)}
+          onClick={catalogHandleSubmit(updateCatalog)}
           disabled={saving || gifts.length === 0}
           className={`
             bg-blue-600 text-white font-bold py-3 px-8 rounded-lg

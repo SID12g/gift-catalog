@@ -3,10 +3,17 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { useForm } from "react-hook-form";
+import { useForm, SubmitHandler } from "react-hook-form";
 import { v4 as uuidv4 } from "uuid";
 import { supabase } from "@/lib/supabase";
 import { Gift } from "@/types";
+
+interface GiftFormData {
+  giftName: string;
+  giftPrice: string;
+  giftQuantity: string;
+  giftPurchaseLink: string;
+}
 
 export default function CreateCatalog() {
   const router = useRouter();
@@ -23,7 +30,7 @@ export default function CreateCatalog() {
     handleSubmit: giftHandleSubmit,
     formState: { errors: giftErrors },
     reset: giftReset,
-  } = useForm();
+  } = useForm<GiftFormData>();
 
   const handleCatalogDataChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -35,7 +42,7 @@ export default function CreateCatalog() {
     });
   };
 
-  const addGift = (data: any) => {
+  const addGift: SubmitHandler<GiftFormData> = (data) => {
     const newGift: Gift = {
       id: uuidv4(),
       name: data.giftName,
