@@ -1,36 +1,60 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 선물 카탈로그 프로젝트
 
-## Getting Started
+이 프로젝트는 [Next.js](https://nextjs.org)를 기반으로 한 선물 카탈로그 웹 애플리케이션입니다.
 
-First, run the development server:
+## 주요 기능
+
+- 로그인 없이 카탈로그 생성 가능
+- 카탈로그별 고유 ID와 비밀번호로 관리
+- 선물 아이템 추가/수정/삭제
+- 구매 완료 상태 업데이트 가능
+- 카탈로그 공유 링크 생성
+
+## 기술 스택
+
+- [Next.js](https://nextjs.org) - React 프레임워크
+- [Tailwind CSS](https://tailwindcss.com) - UI 스타일링
+- [Supabase](https://supabase.com) - 데이터베이스 및 백엔드
+- [React Hook Form](https://react-hook-form.com) - 폼 핸들링
+- [TypeScript](https://www.typescriptlang.org) - 타입 안정성
+
+## 시작하기
+
+1. 환경 변수 설정하기
+
+   - `.env.local.example` 파일을 `.env.local`로 복사하고 Supabase 프로젝트 정보를 입력하세요.
+
+2. 개발 서버 실행하기:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
 pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+3. 브라우저에서 [http://localhost:3000](http://localhost:3000)을 열어 결과를 확인하세요.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Supabase 설정
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+1. [Supabase](https://supabase.com)에 가입하고 새 프로젝트를 생성하세요.
+2. 다음과 같은 테이블을 생성하세요:
 
-## Learn More
+```sql
+create table catalogs (
+  id uuid primary key,
+  title text not null,
+  description text,
+  password text not null,
+  gifts jsonb not null,
+  createdAt timestamp with time zone not null default now()
+);
+```
 
-To learn more about Next.js, take a look at the following resources:
+3. 프로젝트 URL과 anon key를 `.env.local` 파일에 입력하세요.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## 배포하기
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+[Vercel](https://vercel.com)을 사용하여 쉽게 배포할 수 있습니다:
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1. GitHub에 프로젝트를 푸시하세요.
+2. Vercel에서 새 프로젝트를 생성하고 GitHub 저장소를 연결하세요.
+3. 환경 변수를 Vercel 프로젝트 설정에 추가하세요.
+4. 배포하세요!
